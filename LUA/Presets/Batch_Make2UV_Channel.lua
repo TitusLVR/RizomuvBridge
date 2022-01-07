@@ -1,5 +1,5 @@
 
- local file = io.open("C:\\Users\\YOUR_NAME\\AppData\\Local\\Temp\\RizomuvBridge\\batch.txt", "r")
+ local file = io.open("C:\\Users\\UserName\\AppData\\Local\\Temp\\RizomuvBridge\\batch.txt", "r")
  local arr = {}
  for line in file:lines() do 
  	table.insert(arr, line) 
@@ -50,7 +50,7 @@ for i, file in ipairs(arr) do
 	ZomSave({File={Path=file .."_out.fbx", UVWProps=true, FBX={UseUVSetNames=true}}})
 	
 	if i == #arr then 
-		f_done = io.open("C:\\Users\\YOUR_NAME\\AppData\\Local\\Temp\\RizomuvBridge\\rizomuv.txt", "w")
+		f_done = io.open("C:\\Users\\UserName\\AppData\\Local\\Temp\\RizomuvBridge\\rizomuv.txt", "w")
 		f_done:write("Exit")
 		f_done:close()
 		end	

@@ -1,17 +1,16 @@
+ZomLoad({File={Path="C:\\Users\\UserName\\AppData\\Local\\Temp\\RizomuvBridge\\rizomuv_TMP.fbx", ImportGroups=true, XYZ=true}, NormalizeUVW=true})
 -- Do not change --
-U3dLoad({File={Path="c:/RizomuvBridge_TMP/rizomuv_TMP.fbx", ImportGroups=true, XYZ=true}, NormalizeUVW=true})
-U3dSet({Path="Prefs.FileSuffix", Value="_out"})
+ZomSet({Path="Prefs.FileSuffix", Value="_out"})
 -- Put your parameters below --
-U3dSet({Path="Vars.AutoSelect.SharpEdges.Angle", Value=65})
-U3dSelect({PrimType="Edge", Select=true, ResetBefore=true, WorkingSetPrimType="Island", ProtectMapName="Protect", FilterIslandVisible=true, Auto={SharpEdges={AngleMin=65}, PipesCutter=true, HandleCutter=true}})
-U3dCut({PrimType="Edge"})
-U3dUnfold({PrimType="Edge", MinAngle=1e-005, Mix=1, Iterations=1, PreIterations=5, StopIfOutOFDomain=false, RoomSpace=0.01, PinMapName="Pin", ProcessNonFlats=true, ProcessSelection=true, ProcessAllIfNoneSelected=true, ProcessJustCut=true})
-U3dIslandGroups({Mode="SetGroupsProperties", MergingPolicy=8322, GroupPaths={ "RootGroup" }, Properties={Pack={MarginSize=0.006}}})
-U3dIslandGroups({Mode="SetGroupsProperties", MergingPolicy=8322, GroupPaths={ "RootGroup" }, Properties={Pack={SpacingSize=0.006}}})
-U3dIslandGroups({Mode="DistributeInTilesByBBox", MergingPolicy=8322})
-U3dIslandGroups({Mode="DistributeInTilesEvenly", MergingPolicy=8322, UseTileLocks=true, UseIslandLocks=true})
-U3dPack({ProcessTileSelection=false, RecursionDepth=1000, RootGroup="RootGroup", Scaling={Mode=3}, Rotate={}, Translate=true, LayoutScalingMode=2})
+ZomSet({Path="Vars.Viewport.ColorMapIDDisplayMode", Value=1})
+ZomSet({Path="Prefs.UI.DisplayPx", Value=true})
+ZomIslandGroups({Mode="SetGroupsProperties", WorkingSet="Visible", GroupPaths={ "RootGroup" }, Properties={Pack={Scaling={Min=0}}}})
+ZomIslandGroups({Mode="SetGroupsProperties", WorkingSet="Visible", GroupPaths={ "RootGroup" }, Properties={Pack={Resolution=512}}})
+ZomSelect({PrimType="Edge", WorkingSet="Visible&UnLocked", IslandGroupMode="Group", Select=true, ResetBefore=true, ProtectMapName="Protect", FilterIslandVisible=true, Auto={SharpEdges={AngleMin=39}, PipesCutter=false, HandleCutter=true, QuadLoopCutter=true, StretchLimiter=true, Quality=0.25, StoreCoordsUVW=true, FlatteningMode=0, FlatteningUnfoldParams={StopIfZeroMix=true, BorderIntersections=true, TriangleFlips=true}}})
+ZomCut({PrimType="Edge", WorkingSet="Visible&UnLocked"})
+ZomLoad({DefaultUnit="m", Data={CoordsUVWInternalPath="#Mesh.Tmp.AutoSelect.UVW "}})
+ZomOptimize({PrimType="Edge", WorkingSet="Visible&Flat&UnLocked", Mix=1, AngleDistanceMix=1, RoomSpace=0.001, MinAngle=1e-05, BorderIntersections=true, TriangleFlips=true, KeepMetric=true, PinMapName="Pin"})
+ZomIslandGroups({Mode="DistributeTilesContent", WorkingSet="Visible&UnLocked", FreezeIslands=true, UseTileLocks=true, UseIslandLocks=true, GroupPaths={ "RootGroup" }})
+ZomPack({RootGroup="RootGroup", WorkingSet="Visible", ProcessTileSelection=false, RecursionDepth=1000, Translate=true, AuxGroup="RootGroup", LayoutScalingMode=0, Scaling={Mix=true, Mode=0}})
 -- Put this parameter if you want to do something in auto mode --
-U3dSave({File={Path="c:/RizomuvBridge_TMP/rizomuv_TMP_out.fbx", UVWProps=true}, __UpdateUIObjFileName=true})
-
-
+ZomSave({File={Path="C:/Users/UserName/AppData/Local/Temp/RizomuvBridge/rizomuv_TMP_out.fbx", UVWProps=true}
