@@ -15,6 +15,7 @@ local RUVB_LUA_PresetFilesDDL = for i in RUVB_LUA_PresetFiles collect (getFilena
 local RUVB_LUA_DDL_Sel =  ((getINISetting RUVB_INI "Preset" "selection") as integer) 
 local RUVB_BTN_IMG = ((getdir #userscripts) + "\\RizomuvBridge\\IMG\\" + (getINISetting RUVB_INI "Button" "Image"))   
 local RUVB_BTN_IMG_A = ((getdir #userscripts) + "\\RizomuvBridge\\IMG\\" + (getINISetting RUVB_INI "Button" "Image_a"))
+local RUVB_SCRIPT_VER = "RizomUV Bridge 1.5:"
 
 fn RizomUV =		
 	(
@@ -210,9 +211,15 @@ fn RUVB_GetResult RUVB_Folder FileName=
 			RUVB_Import_FBX RUVB_Folder FileName
 			--get imported objects			
 			newObjs = for o in objects where ((findItem oldObjs o) == 0) collect o
-			
+
 			for o in newObjs do
 			(
+				if isKindOf o.baseObject dummy == true do 
+				(
+					delete o
+					continue
+				)
+
 				parentNodeHandle = (execute (filterString o.name "__")[2])
 				--get the parent node
 				parentNode = undefined
@@ -220,7 +227,7 @@ fn RUVB_GetResult RUVB_Folder FileName=
 				parentNode = obj
 					
 				if parentNode != undefined do
-				(
+				(	
 					convertToPoly o					
 					chCount = (polyop.getNumMaps o) - 1									
 					for i=1 to chCount do 
@@ -271,7 +278,7 @@ fn RUVB_Init =
 		(
 			RUVB_EXE = getINISetting RUVB_INI "Path" "rizomuv"
 			RUVB_Folder = getINISetting RUVB_INI "ExchangeFolder" "Folder"
-			format "RizomUVBridge_1.4: INI file - Tweak it here: %\n" ((getdir #userscripts) + "\\RizomuvBridge\\RizomuvBridge_settings.ini")
+			format "% INI file - Tweak it here: %\n" RUVB_SCRIPT_VER ((getdir #userscripts) + "\\RizomuvBridge\\RizomuvBridge_settings.ini")
 		)
 		
 		if doesFileExist (RUVB_Folder + RUVB_TempFile_out +".fbx") do
@@ -295,7 +302,7 @@ fn RUVB_Init =
 			(
 				RUVB_Folder = temp_folder
 				setINISetting RUVB_INI "ExchangeFolder" "Folder" RUVB_Folder
-				format "RizomUVBridge_1.4: Temp Folder Path: %\n" (RUVB_Folder)
+				format "% Temp Folder Path: %\n" RUVB_SCRIPT_VER RUVB_Folder
 			)
 			else
 			(
@@ -311,13 +318,13 @@ fn RUVB_Init =
 		if doesFileExist (RUVB_LUA_newUV) == false then
 			(
 				generate_LUA_file_new max_filepath
-				format "RizomUVBridge_1.4: LUA New File Created: %\n" (RUVB_LUA_newUV)
+				format "% LUA New File Created: %\n" RUVB_SCRIPT_VER RUVB_LUA_newUV
 			)
 		
 		if doesFileExist (RUVB_LUA_EditUV) == false then
 			(
 				generate_LUA_file_edit max_filepath				
-				format "RizomUVBridge_1.4: LUA Edit File Created: %\n" (RUVB_LUA_EditUV)
+				format "% LUA Edit File Created: %\n" RUVB_SCRIPT_VER RUVB_LUA_EditUV
 			)
 
 		-- Setup EXE
@@ -343,9 +350,9 @@ fn RUVB_Init =
 		if RUVB_EXE != false do
 		(
 			setINISetting RUVB_INI "Path" "rizomuv" RUVB_EXE
-			format "RizomUVBridge_1.4: Rizomuv File: %\n" (RUVB_EXE)
+			format "% Rizomuv File: %\n" RUVB_SCRIPT_VER RUVB_EXE
 		)		
 		
 		setDialogPos rizomuvBridge_Rollout [(RUVB_posX),(RUVB_posY)]	
-		format "RizomUVBridge_1.4: Loaded :) \n"
+		format "% Loaded :) \n" RUVB_SCRIPT_VER
 	)

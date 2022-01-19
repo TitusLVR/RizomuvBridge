@@ -8,6 +8,9 @@ Because some ideas were taken from it.
 
 CHANGE LOG:
 ------------------------------------------------------------------------------
+20 January 2022 v 1.5
+-- Fixed Linked Geo Error
+
 02 January 2022 v 1.4
 - Added Batch preset
 - small fixes
