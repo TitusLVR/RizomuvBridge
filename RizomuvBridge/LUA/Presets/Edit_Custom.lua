@@ -1,0 +1,15 @@
+ZomLoad({File={Path="C:\\Users\\UserName\\AppData\\Local\\Temp\\RizomuvBridge\\rizomuv_TMP.fbx", ImportGroups=true, XYZ=true}, NormalizeUVW=true})
+-- Do not change --
+ZomSet({Path="Prefs.FileSuffix", Value="_out"})
+-- Put your parameters below --
+ZomSet({Path="Lib.Scene.Settings.Unit", Value="m", UndoAble=true})
+ZomSet({Path="Prefs.UI.DisplayPx", Value=true})
+ZomIslandGroups({Mode="SetGroupsProperties", WorkingSet="Visible", GroupPaths={ "RootGroup" }, Properties={Pack={PaddingSize=0.00195312}}})
+ZomIslandGroups({Mode="SetGroupsProperties", WorkingSet="Visible", GroupPaths={ "RootGroup" }, Properties={Pack={MarginSize=0.00292969}}})
+ZomSet({Path="Prefs.UI.Display.Help", Value=false})
+ZomSet({Path="Prefs.TriangleFlipsOn", Value=true})
+ZomSet({Path="Prefs.OverlapsOn", Value=true})
+ZomSet({Path="Vars.Unwrap.FreeSelectionBorder", Value=true})
+ZomSet({Path="Vars.Unwrap.FillHoles", Value=true})
+ZomSet({Path="Vars.Viewport.ColorMapIDDisplayMode", Value=7})
+ZomSet({Path="Prefs.PackOptions.ScalingMode", Value=4})
