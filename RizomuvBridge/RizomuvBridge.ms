@@ -8,6 +8,9 @@ Because some ideas were taken from it.
 
 CHANGE LOG:
 ------------------------------------------------------------------------------
+10 July 2024 v1.5.3
+- Fixed typo 
+
 20 January 2022 v 1.5
 -- Fixed Linked Geo Error
 
@@ -132,7 +135,7 @@ rollout rizomuvBridge_Rollout "RizomUV Bridge"
 		if RizomUV() == True then			
 		(
 			tmr_checkForUvs.active = false			
-			messageBox "RizomUV process deosn't exists." title:"Warning" beep:off
+			messageBox "RizomUV process doesn't exists." title:"Warning" beep:off
 		)		
 		else 
 			( 	
