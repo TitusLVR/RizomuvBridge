@@ -28,15 +28,15 @@ Once you press Save, RizomUV will close, and the 3ds Max window will reappear. T
  - RMB on Preset Dropdown: Reloads or updates the presets list.
 
 ## Editing Preset Files:
-In RizomUV, open the Script and Command Log window (default shortcut: L).
-The log will display the commands and parameters for any changes made.
-Copy the relevant lines and paste them into your preset file. Save the file to complete the update.
+  In RizomUV, open the Script and Command Log window (default shortcut: L).
+  The log will display the commands and parameters for any changes made.
+  Copy the relevant lines and paste them into your preset file. Save the file to complete the update.
 
 ## Script Requirements:
  - 3ds Max: Compatible with versions 2020, 2021, and 2022.
  - RizomUV: Compatible with versions 2021 and 2022.
-Note: Older versions of 3ds Max may work but are not officially supported. Use them at your own risk.
+ - Note: Older versions of 3ds Max may work but are not officially supported. Use them at your own risk.
 
-Additional Information:
+## Additional Information:
 Current version: 1.5.1
 Thank you for using this script! Happy UV-ing!
