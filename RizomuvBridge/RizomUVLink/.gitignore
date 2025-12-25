@@ -1,0 +1,5 @@
+__pycache__/
+win/__pycache__
+examples/ExampleMeshOutput.obj
+
+gitinfo.tmp
