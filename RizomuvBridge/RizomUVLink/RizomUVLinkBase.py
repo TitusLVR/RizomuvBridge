@@ -46,7 +46,7 @@ class CRizomUVLinkBase:
 
 	def RizomUVVersion(self):
 		""" Returns the version of the connected RizomUV standalone program"""
-		return self.rizomuv.Execute("Get", "Vars.Infos.Version.Full", 10000)
+		return self.rizomuv.Execute("Get", "Vars.Infos.Version.Full", 20000)
 
 	def Execute(self, commandName, parameters):
 		return self.rizomuv.Execute(commandName, parameters, 2000)

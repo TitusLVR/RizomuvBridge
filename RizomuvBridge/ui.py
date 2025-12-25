@@ -1,0 +1,395 @@
+try:
+    from PySide6 import QtWidgets, QtCore, QtGui
+except ImportError:
+    from PySide2 import QtWidgets, QtCore, QtGui
+import os
+import importlib
+from pymxs import runtime as rt
+
+# Force reload dependencies to ensure updates are picked up in 3ds Max
+from . import settings
+from . import max_ops
+from . import rizom_client
+from . import core
+
+importlib.reload(settings)
+importlib.reload(max_ops)
+importlib.reload(rizom_client)
+importlib.reload(core)
+
+from .core import RizomUVBridgeCore
+
+class RizomUVBridgeDialog(QtWidgets.QDialog):
+    def __init__(self, parent=None):
+        super(RizomUVBridgeDialog, self).__init__(parent)
+        self.setWindowTitle("RizomUV Bridge")
+        self.resize(250, 300)
+        
+        self.core = RizomUVBridgeCore()
+        
+        # UI State Variables
+        self.mode = "New" # New, Edit. "Preset"/"Batch" removed or integrated?
+        # User asked for "Send" and "Get" buttons
+        
+        self.temp_file_base = self.core.get_ini_setting("ExchangeFolder", "TempFile", "rizomuv_temp")
+        self.temp_file_out = self.core.get_ini_setting("ExchangeFolder", "TempFile_out", "rizomuv_temp_out")
+        
+        self.setup_ui()
+        
+    def setup_ui(self):
+        main_layout = QtWidgets.QVBoxLayout(self)
+        
+
+        
+        # --- Actions (Send/Get) ---
+        # Kept separate but visibility controlled
+        # Kept separate but visibility controlled
+        action_layout = QtWidgets.QGridLayout()
+        
+        self.btn_send = QtWidgets.QPushButton("Send")
+        self.btn_send.setMinimumHeight(40)
+        self.btn_send.clicked.connect(self.on_send_clicked)
+        
+        self.btn_get = QtWidgets.QPushButton("Get")
+        self.btn_get.setMinimumHeight(40)
+        self.btn_get.clicked.connect(self.on_get_clicked)
+        
+        # Grid: Send|Get  Sync(Full)
+        action_layout.addWidget(self.btn_send, 0, 0)
+        action_layout.addWidget(self.btn_get, 0, 1)
+        
+        self.btn_sync = QtWidgets.QPushButton("Sync Sel")
+        self.btn_sync.setMinimumHeight(40)
+        self.btn_sync.setToolTip("Sync Selection Mode from Max")
+        self.btn_sync.clicked.connect(self.on_sync_selection_clicked)
+        action_layout.addWidget(self.btn_sync, 1, 0, 1, 2)
+        
+
+        
+        self.layout_actions = action_layout # Save ref if needed, or just toggle buttons
+        main_layout.addLayout(action_layout)
+        
+        # --- RizomUV Tools Group ---
+        self.group_tools = QtWidgets.QGroupBox("RizomUV Tools")
+        tools_layout = QtWidgets.QGridLayout()
+        
+        self.btn_cut = QtWidgets.QPushButton("Cut")
+        self.btn_cut.clicked.connect(self.on_cut_clicked)
+        
+        self.btn_unfold = QtWidgets.QPushButton("Unfold")
+        self.btn_unfold.clicked.connect(self.on_unfold_clicked)
+        
+        self.btn_pack = QtWidgets.QPushButton("Pack")
+        self.btn_pack.clicked.connect(self.on_pack_clicked)
+        
+        self.btn_weld = QtWidgets.QPushButton("Weld All")
+        self.btn_weld.clicked.connect(self.on_weld_clicked)
+        
+        self.btn_weld_selected = QtWidgets.QPushButton("Weld Selected")
+        self.btn_weld_selected.clicked.connect(self.on_weld_selected_clicked)
+        
+        self.btn_optimize = QtWidgets.QPushButton("Optimize")
+        self.btn_optimize.clicked.connect(self.on_optimize_clicked)
+
+        # Order Requested:
+        # Row 0: Weld All | Weld Selected
+        # Row 1: Cut (ColSpan 2)
+        # Row 2: Unfold | Optimize
+        # Row 3: Pack (ColSpan 2)
+        
+        tools_layout.addWidget(self.btn_weld, 0, 0)
+        tools_layout.addWidget(self.btn_weld_selected, 0, 1)
+        tools_layout.addWidget(self.btn_cut, 1, 0, 1, 2)
+        tools_layout.addWidget(self.btn_unfold, 2, 0)
+        tools_layout.addWidget(self.btn_optimize, 2, 1)
+        tools_layout.addWidget(self.btn_pack, 3, 0, 1, 2)
+        
+        self.group_tools.setLayout(tools_layout)
+        main_layout.addWidget(self.group_tools)
+        
+        # --- Script Section ---
+        self.script_group = QtWidgets.QGroupBox("Scripts")
+        script_layout = QtWidgets.QVBoxLayout()
+        
+        # Folder Selection
+        folder_layout = QtWidgets.QHBoxLayout()
+        self.lbl_folder = QtWidgets.QLabel("Folder:")
+        self.btn_folder = QtWidgets.QPushButton("...")
+        self.btn_folder.setFixedWidth(30)
+        self.btn_folder.clicked.connect(self.on_set_folder_clicked)
+        folder_layout.addWidget(self.lbl_folder)
+        folder_layout.addWidget(self.btn_folder)
+        script_layout.addLayout(folder_layout)
+        
+        # Script Dropdown & Run
+        run_layout = QtWidgets.QHBoxLayout()
+        self.combo_scripts = QtWidgets.QComboBox()
+        self.refresh_scripts()
+        
+        self.btn_run_script = QtWidgets.QPushButton("Run Script")
+        self.btn_run_script.setFixedWidth(80)
+        self.btn_run_script.clicked.connect(self.on_run_script_clicked)
+        
+        run_layout.addWidget(self.combo_scripts)
+        run_layout.addWidget(self.btn_run_script)
+        script_layout.addLayout(run_layout)
+        
+        self.script_group.setLayout(script_layout)
+        main_layout.addWidget(self.script_group)
+        
+        # --- File Format Group ---
+        self.group_format = QtWidgets.QGroupBox("File Format")
+        format_layout = QtWidgets.QHBoxLayout()
+        format_layout.addWidget(QtWidgets.QLabel("FBX Version:"))
+        self.combo_fbx = QtWidgets.QComboBox()
+        self.combo_fbx.addItems(["FBX201200", "FBX202000"]) 
+        format_layout.addWidget(self.combo_fbx)
+        format_layout.addStretch()
+        self.group_format.setLayout(format_layout)
+        
+        main_layout.addWidget(self.group_format)
+
+        # --- RizomUV Link Group ---
+        self.group_link = QtWidgets.QGroupBox("RizomUVLink")
+        link_layout = QtWidgets.QHBoxLayout()
+        
+        self.btn_start = QtWidgets.QPushButton("Start RizomUV")
+        self.btn_start.clicked.connect(self.on_start_clicked)
+        
+        self.btn_close = QtWidgets.QPushButton("Close RizomUV")
+        self.btn_close.clicked.connect(self.on_close_clicked)
+        
+        link_layout.addWidget(self.btn_start)
+        link_layout.addWidget(self.btn_close)
+        self.group_link.setLayout(link_layout)
+        
+        main_layout.addWidget(self.group_link)
+        
+        main_layout.addStretch()
+        
+        # Initial State
+        self.update_ui_state()
+
+    def update_ui_state(self):
+        is_running = self.core.is_rizom_running()
+        
+        # Link Group
+        self.btn_start.setVisible(not is_running)
+        self.btn_close.setVisible(is_running)
+        
+        # Other Elements
+        self.btn_send.setVisible(is_running)
+        self.btn_get.setVisible(is_running)
+        self.btn_sync.setVisible(is_running)
+        self.group_tools.setVisible(is_running)
+        self.script_group.setVisible(is_running)
+        self.group_format.setVisible(is_running)
+        
+        # Resize window to fit content
+        self.adjustSize()
+
+    def refresh_scripts(self):
+        self.combo_scripts.clear()
+        scripts = self.core.get_available_scripts()
+        if scripts:
+            self.combo_scripts.addItems(scripts)
+            self.combo_scripts.setEnabled(True)
+        else:
+            self.combo_scripts.addItem("No scripts found")
+            self.combo_scripts.setEnabled(False)
+            
+    def ensure_connection(self):
+        if self.core.link and self.core.is_rizom_running():
+            return True
+            
+        # Try to start/connect
+        if self.core.start_rizom():
+            return True
+            
+        # Failed, ask user
+        path = self.core.get_rizom_path()
+        if not path or not os.path.exists(path):
+             res = QtWidgets.QMessageBox.question(self, "RizomUV Not Found", "RizomUV executable not found or connection failed.\nDo you want to specify the path manually?", QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+             if res == QtWidgets.QMessageBox.Yes:
+                 exe_path, _ = QtWidgets.QFileDialog.getOpenFileName(self, "Select RizomUV Executable", "C:\\", "Executables (*.exe)")
+                 if exe_path:
+                     self.core.set_ini_setting("Path", "rizomuv", exe_path)
+                     if self.core.start_rizom():
+                         return True
+        
+        QtWidgets.QMessageBox.critical(self, "Error", "Could not connect to RizomUV.")
+        return False
+
+    def on_start_clicked(self):
+        self.ensure_connection()
+        self.update_ui_state()
+
+    def on_set_folder_clicked(self):
+        current = self.core.get_scripts_folder()
+        new_folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Select Scripts Folder", current)
+        if new_folder:
+            self.core.set_scripts_folder(new_folder)
+            self.refresh_scripts()
+
+
+    def on_close_clicked(self):
+        # Default to safe close
+        self.core.close_rizom(force=False)
+        self.update_ui_state()
+
+    def on_send_clicked(self):
+        selection = list(rt.selection)
+        if not selection:
+            QtWidgets.QMessageBox.warning(self, "Selection", "Please select objects.")
+            return
+
+        valid_objs = [o for o in selection if rt.isKindOf(o, rt.Editable_Poly)]
+        if len(valid_objs) != len(selection):
+             # Compatibility for PySide6 Enums
+             try:
+                 Yes = QtWidgets.QMessageBox.StandardButton.Yes
+                 No = QtWidgets.QMessageBox.StandardButton.No
+             except AttributeError:
+                 Yes = QtWidgets.QMessageBox.Yes
+                 No = QtWidgets.QMessageBox.No
+                 
+             res = QtWidgets.QMessageBox.question(self, "Convert?", "Some objects are not Editable Poly. Convert them?", Yes | No)
+             if res == Yes:
+                 for o in selection:
+                     rt.convertToPoly(o)
+                 valid_objs = selection
+             else:
+                 return
+
+        # Prepare Logic
+        exchange_folder = self.core.get_exchange_folder()
+        fbx_path = os.path.join(exchange_folder, self.temp_file_base + ".fbx")
+        
+        # Check Mode
+        # If New, maybe clear channels? 
+        # For now, we trust the user knows "New" implies new UVs in Rizom.
+        # Rizom "New" is handled by link.Load(XYZ=True) (without XYZUVW=True) usually, 
+        # or we rely on Rizom UI.
+        # But core.send_mesh sends with ImportGroups=True, XYZ=True, UV=True.
+        # If we want "New", we maybe shouldn't send UVs?
+        # Actually export_fbx sends what is in Max. If Max has UVs, they go.
+        # If user selected "New (Clean)" we should clear channels on the TEMP objects.
+        
+        temp_objs = self.core.prepare_temp_objects(valid_objs)
+        
+        # Cleanup geometry
+        for o in temp_objs:
+             self.core.cleanup_object(o)
+             # All channels preserved as requested
+
+        # Export
+        rt.select(temp_objs)
+        self.core.export_fbx(fbx_path, selected=True)
+            
+        rt.delete(temp_objs)
+        rt.select(valid_objs)
+        
+        # Send
+        success = self.core.send_mesh(fbx_path)
+        if not success:
+            QtWidgets.QMessageBox.critical(self, "Error", "Failed to communicate with RizomUV.")
+            return
+
+        # Auto-Run Logic (Implicit)
+        try:
+             self.core.link.Set({'Path': "Prefs.RemoteControlFileMonitoringOn", 'Value': True})
+        except:
+             pass
+
+    def on_get_clicked(self):
+        exchange_folder = self.core.get_exchange_folder()
+        out_fbx_path = os.path.join(exchange_folder, self.temp_file_out + ".fbx")
+        
+        # Helper to ensure file cleans up
+        if os.path.exists(out_fbx_path):
+            try:
+                os.remove(out_fbx_path)
+            except:
+                pass
+                
+        # Get
+        success = self.core.get_mesh(out_fbx_path)
+        if not success:
+            QtWidgets.QMessageBox.critical(self, "Error", "Failed to retrieve mesh from RizomUV.")
+            return
+            
+        if not os.path.exists(out_fbx_path):
+             QtWidgets.QMessageBox.warning(self, "Warning", "RizomUV did not save the file. Did you forget to pack/save inside Rizom?")
+             return
+             
+        # Import
+        self.import_results(out_fbx_path)
+
+    def on_run_script_clicked(self):
+        script_name = self.combo_scripts.currentText()
+        if not script_name or script_name == "No scripts found":
+            return
+            
+        folder = self.core.get_scripts_folder()
+        path = os.path.join(folder, script_name)
+        
+        if not os.path.exists(path):
+            QtWidgets.QMessageBox.warning(self, "Error", "Script file not found.")
+            return
+
+        success = self.core.run_script(path)
+        if not success:
+             QtWidgets.QMessageBox.critical(self, "Error", "Failed to run script.")
+
+    def on_cut_clicked(self):
+        self.core.cut()
+
+    def on_unfold_clicked(self):
+        self.core.unfold()
+        
+    def on_optimize_clicked(self):
+        self.core.optimize()
+
+    def on_pack_clicked(self):
+        self.core.pack()
+
+    def on_weld_clicked(self):
+        self.core.weld_all() 
+
+    def on_weld_selected_clicked(self):
+        self.core.weld_selected()
+        
+    def on_sync_selection_clicked(self):
+        self.core.sync_selection()
+
+    def import_results(self, fbx_path):
+        old_objs = list(rt.objects) # List for safe snapshot
+        self.core.import_fbx(fbx_path)
+        
+        curr_objs = list(rt.objects)
+        new_objs = [o for o in curr_objs if o not in old_objs]
+        
+        self.core.transfer_uvs_from_imported(new_objs)
+
+def show():
+    # Helper to show dialog
+    # Parent to Max Window handle usually needed
+    parent = None
+    try:
+        max_hwnd = rt.windows.getMAXHWND()
+    except:
+        max_hwnd = None
+        
+    # PySide2 parenting to HWND is tricky without a helper; 
+    # usually `GetQMaxMainWindow()` if available (in 2025/2024?) or generic parenting.
+    # For now, parent=None is acceptable for a top-level tool.
+    
+    global _rizom_dialog
+    try:
+        _rizom_dialog.close()
+    except:
+        pass
+        
+    _rizom_dialog = RizomUVBridgeDialog(parent)
+    _rizom_dialog.show()
+
