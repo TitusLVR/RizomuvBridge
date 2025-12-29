@@ -25,6 +25,14 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         self.setWindowTitle("RizomUV Bridge")
         self.resize(250, 300)
         
+        # Ensure window is always on top
+        # Ensure window is always on top (PySide2/6 compat)
+        try:
+            flag = QtCore.Qt.WindowStaysOnTopHint
+        except AttributeError:
+            flag = QtCore.Qt.WindowType.WindowStaysOnTopHint
+        self.setWindowFlags(self.windowFlags() | flag)
+        
         self.core = RizomUVBridgeCore()
         
         # UI State Variables
@@ -138,12 +146,24 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         main_layout.addWidget(self.script_group)
         
         # --- File Format Group ---
+        # --- File Format Group ---
         self.group_format = QtWidgets.QGroupBox("File Format")
         format_layout = QtWidgets.QHBoxLayout()
-        format_layout.addWidget(QtWidgets.QLabel("FBX Version:"))
+        
+        format_layout.addWidget(QtWidgets.QLabel("Type:"))
+        self.combo_file_type = QtWidgets.QComboBox()
+        self.combo_file_type.addItems(["USD", "FBX"])
+        # FBX Default (User Request)
+        self.combo_file_type.setCurrentIndex(1) 
+        self.combo_file_type.currentIndexChanged.connect(self.on_file_type_changed)
+        format_layout.addWidget(self.combo_file_type)
+        
+        self.lbl_fbx_ver = QtWidgets.QLabel("FBX Ver:")
+        format_layout.addWidget(self.lbl_fbx_ver)
         self.combo_fbx = QtWidgets.QComboBox()
         self.combo_fbx.addItems(["FBX201200", "FBX202000"]) 
         format_layout.addWidget(self.combo_fbx)
+        
         format_layout.addStretch()
         self.group_format.setLayout(format_layout)
         
@@ -170,6 +190,12 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         # Initial State
         self.update_ui_state()
 
+
+    def on_file_type_changed(self, index=None):
+        is_usd = self.combo_file_type.currentText() == "USD"
+        self.lbl_fbx_ver.setVisible(not is_usd)
+        self.combo_fbx.setVisible(not is_usd)
+
     def update_ui_state(self):
         is_running = self.core.is_rizom_running()
         
@@ -184,6 +210,9 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         self.group_tools.setVisible(is_running)
         self.script_group.setVisible(is_running)
         self.group_format.setVisible(is_running)
+        
+        if is_running:
+            self.on_file_type_changed()
         
         # Resize window to fit content
         self.adjustSize()
@@ -262,8 +291,15 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
                  return
 
         # Prepare Logic
+        # Prepare Logic
         exchange_folder = self.core.get_exchange_folder()
-        fbx_path = os.path.join(exchange_folder, self.temp_file_base + ".fbx")
+        
+        fmt = self.combo_file_type.currentText()
+        ext = ".fbx"
+        if fmt == "USD": 
+            ext = ".usd"
+            
+        file_path = os.path.join(exchange_folder, self.temp_file_base + ext)
         
         # Check Mode
         # If New, maybe clear channels? 
@@ -275,7 +311,15 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         # Actually export_fbx sends what is in Max. If Max has UVs, they go.
         # If user selected "New (Clean)" we should clear channels on the TEMP objects.
         
-        temp_objs = self.core.prepare_temp_objects(valid_objs)
+        # Only apply channel fix for FBX. USD handles named channels differently 
+        # and forcefully filling empty channels causes "index out of range" errors in USD.
+        export_type_val = fmt
+        if export_type_val == "FBX":
+            fix_missing_channels = True
+        else: # USD
+            fix_missing_channels = False
+            
+        temp_objs = self.core.prepare_temp_objects(valid_objs, fix_missing_channels=fix_missing_channels)
         
         # Cleanup geometry
         for o in temp_objs:
@@ -284,13 +328,16 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
 
         # Export
         rt.select(temp_objs)
-        self.core.export_fbx(fbx_path, selected=True)
+        if fmt == "USD":
+            self.core.export_usd(file_path, selected=True)
+        else:
+            self.core.export_fbx(file_path, selected=True)
             
         rt.delete(temp_objs)
         rt.select(valid_objs)
         
         # Send
-        success = self.core.send_mesh(fbx_path)
+        success = self.core.send_mesh(file_path, file_format=fmt)
         if not success:
             QtWidgets.QMessageBox.critical(self, "Error", "Failed to communicate with RizomUV.")
             return
@@ -303,27 +350,34 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
 
     def on_get_clicked(self):
         exchange_folder = self.core.get_exchange_folder()
-        out_fbx_path = os.path.join(exchange_folder, self.temp_file_out + ".fbx")
+        
+        fmt = self.combo_file_type.currentText()
+        ext = ".fbx"
+        if fmt == "USD": 
+            ext = ".usd"
+            
+        out_path = os.path.join(exchange_folder, self.temp_file_out + ext)
         
         # Helper to ensure file cleans up
-        if os.path.exists(out_fbx_path):
+        if os.path.exists(out_path):
             try:
-                os.remove(out_fbx_path)
+                os.remove(out_path)
             except:
                 pass
                 
         # Get
-        success = self.core.get_mesh(out_fbx_path)
+        success = self.core.get_mesh(out_path)
         if not success:
             QtWidgets.QMessageBox.critical(self, "Error", "Failed to retrieve mesh from RizomUV.")
             return
             
-        if not os.path.exists(out_fbx_path):
+        if not os.path.exists(out_path):
              QtWidgets.QMessageBox.warning(self, "Warning", "RizomUV did not save the file. Did you forget to pack/save inside Rizom?")
              return
              
         # Import
-        self.import_results(out_fbx_path)
+        # Import
+        self.import_results(out_path)
 
     def on_run_script_clicked(self):
         script_name = self.combo_scripts.currentText()
@@ -362,9 +416,13 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
     def on_sync_selection_clicked(self):
         self.core.sync_selection()
 
-    def import_results(self, fbx_path):
+    def import_results(self, file_path):
         old_objs = list(rt.objects) # List for safe snapshot
-        self.core.import_fbx(fbx_path)
+        
+        if file_path.lower().endswith(".usd") or file_path.lower().endswith(".usda") or file_path.lower().endswith(".usdc"):
+             self.core.import_usd(file_path)
+        else:
+             self.core.import_fbx(file_path)
         
         curr_objs = list(rt.objects)
         new_objs = [o for o in curr_objs if o not in old_objs]

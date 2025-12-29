@@ -34,6 +34,57 @@ class RizomUVBridgeMaxOps:
         rt.exportFile(filepath, rt.Name("noPrompt"), selectedOnly=selected, usage=rt.FBXEXP)
 
     @staticmethod
+    def export_usd(filepath, selected=True):
+        # Explicitly set UpAxis to Y for Rizom (which expects Y-up)
+        # 3ds Max is Z-up. Rizom expects Y-up.
+        try:
+             # Max 2022/2023+ USD Interface
+             usd_opts = rt.USDExporter.CreateOptions()
+             
+             # User Example Integration
+             # MaxScript Docs say: UpAxis expects a Name value #y or #z
+             # User requested specific order
+             usd_opts.Meshes = True
+             usd_opts.Lights = False
+             usd_opts.Cameras = False
+             usd_opts.Materials = False
+             
+             # usd_opts.FileFormat = rt.Name("ascii") # Optional, defaults to binary/ext usually
+             
+             usd_opts.UpAxis = rt.Name("y") 
+             
+             # usd_opts.LogLevel = rt.Name("info")
+             # usd_opts.LogPath = ...
+             
+             usd_opts.PreserveEdgeOrientation = False # Keep False to prevent faceting
+             usd_opts.Normals = rt.Name("asPrimvar") 
+             usd_opts.TimeMode = rt.Name("current")
+             
+             # Extra settings we added
+             usd_opts.BakeObjectOffsetTransform = True 
+             usd_opts.MeshFormat = rt.Name("polyMesh")
+             usd_opts.Shapes = False
+             
+             print(f"Exporting USD to {filepath} using USDExporter Interface with UpAxis=Y")
+
+             # We need to pass the selected nodes if selected=True
+             if selected:
+                 # Get selection as safe python list for nodeList argument
+                 sel_list = list(rt.selection)
+                 rt.USDExporter.ExportFile(filepath, exportOptions=usd_opts, nodeList=sel_list, contentSource=rt.Name("nodeList"))
+             else:
+                 rt.USDExporter.ExportFile(filepath, exportOptions=usd_opts)
+             
+             return
+        except Exception as e:
+             # Important: Print error to see if we are falling back
+             print(f"Advanced USD Export failed (Falling back to legacy): {e}")
+             pass
+
+        # Fallback for older versions or if interface differs
+        rt.exportFile(filepath, rt.Name("noPrompt"), selectedOnly=selected, using=rt.USDExporter)
+
+    @staticmethod
     def import_fbx(filepath):
         rt.pluginManager.loadClass(rt.FBXIMP)
         rt.FBXImporterSetParam("Mode", rt.Name("create"))
@@ -50,12 +101,26 @@ class RizomUVBridgeMaxOps:
         rt.importFile(filepath, rt.Name("noprompt"), usage=rt.FBXIMP)
 
     @staticmethod
-    def prepare_temp_objects(objects):
+    def import_usd(filepath):
+        rt.importFile(filepath, rt.Name("noprompt"), using=rt.USDImporter)
+
+    @staticmethod
+    def prepare_temp_objects(objects, fix_missing_channels=False):
         temp_objs = []
         timestamp = str(int(time.time()))
         for obj in objects:
             snap = rt.copy(obj)
             rt.convertToPoly(snap)
+            
+            if fix_missing_channels:
+                # Force map support for all available channels to ensure 
+                # FBX export preserves indices (preventing 5 becoming 2 if 2-4 are empty).
+                # Start at 1 to SKIP Channel 0 (Vertex Color).
+                num_maps = rt.polyop.getNumMaps(snap)
+                for i in range(1, num_maps + 1):
+                     if not rt.polyop.getMapSupport(snap, i):
+                         rt.polyop.setMapSupport(snap, i, True)
+
             handle = rt.GetHandleByAnim(obj)
             snap.name = f"{timestamp}__{handle}"
             temp_objs.append(snap)
@@ -75,28 +140,49 @@ class RizomUVBridgeMaxOps:
                 continue
             
             try:
+                # USD import might rename "123__456" to "_123__456" or similar
+                # Robustly find handle part
                 parts = obj.name.split("__")
+                if len(parts) < 2:
+                    # Fallback: maybe double underscore was lost/converted to single?
+                    # Try to parse from end if we assume format timestamp_handle
+                    pass 
+                
                 if len(parts) >= 2:
-                    handle_str = parts[1].split("_")[0] 
-                    handle = int(handle_str)
-                    original_node = rt.GetAnimByHandle(handle)
+                    # Handle is in the last part (or second part)
+                    # Use parts[-1] to be safe against prefixes
+                    handle_part = parts[-1] 
                     
-                    if original_node:
-                        rt.convertToPoly(obj)
-                        # Get number of map channels
-                        # channel 1 is UV
-                        # Rizom usually exports to standard channels.
-                        count = rt.polyop.getNumMaps(obj) - 1
-                        
-                        for i in range(1, count + 1):
-                             rt.ChannelInfo.CopyChannel(obj, 3, i)
-                             rt.ChannelInfo.PasteChannel(original_node, 3, i)
-                             
-                             if original_node.modifiers.count > 0:
-                                 try:
-                                     original_node.modifiers[0].name = f"RizomUV's ch{i}"
-                                 except:
-                                     pass
+                    # Remove any suffix added by importer (e.g. _Shape, _001) if separator is _
+                    # But handle is int.
+                    # We expect handle_part to start with the handle number.
+                    # Filter digits
+                    import re
+                    match = re.search(r'^(\d+)', handle_part)
+                    if match:
+                        handle = int(match.group(1))
+                        original_node = rt.GetAnimByHandle(handle)
+                    
+                        if original_node:
+                            rt.convertToPoly(obj)
+                            # Get number of map channels
+                            # channel 1 is UV
+                            # Rizom usually exports to standard channels.
+                            count = rt.polyop.getNumMaps(obj) - 1
+                            
+                            for i in range(1, count + 1):
+                                 # rt.ChannelInfo.GetChannelName does not exist in pymxs. 
+                                 # We cannot easily retrieve map channel names via this interface.
+                                 # Proceeding with generic copy/paste.
+                                 
+                                 rt.ChannelInfo.CopyChannel(obj, 3, i)
+                                 rt.ChannelInfo.PasteChannel(original_node, 3, i)
+                                 
+                                 if original_node.modifiers.count > 0:
+                                     try:
+                                         original_node.modifiers[0].name = f"RizomUV's ch{i}"
+                                     except:
+                                         pass
             except Exception as e:
                 print(f"Error transferring UVs for {obj.name}: {e}")
             

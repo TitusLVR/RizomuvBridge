@@ -149,19 +149,28 @@ class RizomClient:
              except:
                 pass
 
-    def load_mesh(self, fbx_path):
+    def load_mesh(self, filepath, file_format=None):
         if not self.connect():
              return False
         
+        is_usd = False
+        if file_format:
+            is_usd = (file_format.upper() == "USD")
+        else:
+            is_usd = filepath.lower().endswith(('.usd', '.usda', '.usdc'))
+        
         params = {
-            "File.Path": fbx_path,
+            "File.Path": filepath,
             "File.XYZUVW": True,
             "File.UV": True, 
             "File.Meta": True,
-            "File.Normals": True,
+            "File.Normals": not is_usd, # User requested normals off for USD import in Rizom
             "File.ImportGroups": True,
-            "File.FBX.UseUVSetNames": True
         }
+        
+        # Add FBX specific params only if FBX
+        if filepath.lower().endswith(".fbx") or (file_format and file_format.upper() == "FBX"):
+             params["File.FBX.UseUVSetNames"] = True
         try:
             self.link.Load(params)
             return True

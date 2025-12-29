@@ -45,13 +45,13 @@ class RizomUVBridgeCore:
     def link(self):
         return self.client.link
         
-    def send_mesh(self, fbx_path):
+    def send_mesh(self, filepath, file_format=None):
         # 1. Start Rizom (Load Mesh handles connect, but good to ensure)
         if not self.client.connect():
              return False
              
         # 2. Rizom Load
-        return self.client.load_mesh(fbx_path)
+        return self.client.load_mesh(filepath, file_format)
 
     def get_mesh(self, fbx_path):
         return self.client.save_mesh(fbx_path)
@@ -101,9 +101,8 @@ class RizomUVBridgeCore:
         # Select command with empty IDs and ResetBefore=True will clear.
         return self.client.select(mode, ids)
 
-    # expose max ops
-    def prepare_temp_objects(self, objects):
-        return self.max_ops.prepare_temp_objects(objects)
+    def prepare_temp_objects(self, objects, fix_missing_channels=False):
+        return self.max_ops.prepare_temp_objects(objects, fix_missing_channels)
         
     def cleanup_object(self, obj):
         self.max_ops.cleanup_object(obj)
@@ -111,9 +110,15 @@ class RizomUVBridgeCore:
     def export_fbx(self, path, selected=True):
         ver = self.settings.get_ini_setting("FileFormat", "FBX_Version_sys")
         self.max_ops.export_fbx(path, fbx_version=ver, selected=selected)
+
+    def export_usd(self, path, selected=True):
+         self.max_ops.export_usd(path, selected=selected)
         
     def import_fbx(self, path):
         self.max_ops.import_fbx(path)
+        
+    def import_usd(self, path):
+        self.max_ops.import_usd(path)
         
     def transfer_uvs_from_imported(self, objects):
         self.max_ops.transfer_uvs_from_imported(objects)
