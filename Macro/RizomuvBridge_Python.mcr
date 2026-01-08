@@ -1,7 +1,7 @@
 macroScript RizomuvBridgePy
 	category:"Titus_Scripts"
-	buttonText:"RizomUV Py"
-	toolTip:"RizomUV Bridge (Python)"
+	buttonText:"RizomUV"
+	toolTip:"RizomUV Bridge"
 	Icon:#("rizomuv" ,1)
 (
     -- Add the repo root directory to sys.path so we can import 'RizomuvBridge' package

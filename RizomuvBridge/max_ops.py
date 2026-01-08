@@ -110,7 +110,11 @@ class RizomUVBridgeMaxOps:
         timestamp = str(int(time.time()))
         for obj in objects:
             snap = rt.copy(obj)
-            rt.convertToPoly(snap)
+            if RizomUVBridgeMaxOps.is_editable_poly(snap) or RizomUVBridgeMaxOps.is_editable_mesh(snap):
+                RizomUVBridgeMaxOps.cleanup_object(snap)
+            else:
+                rt.delete(snap)
+                continue
             
             if fix_missing_channels:
                 # Force map support for all available channels to ensure 
@@ -127,10 +131,18 @@ class RizomUVBridgeMaxOps:
         return temp_objs
 
     @staticmethod
+    def is_editable_poly(obj):
+        return rt.isKindOf(obj.baseObject, rt.Editable_Poly)
+
+    @staticmethod
+    def is_editable_mesh(obj):
+        return rt.isKindOf(obj.baseObject, rt.Editable_Mesh)
+
+    @staticmethod
     def cleanup_object(obj):
-        # We intentionally skip destructive cleanup (convertToMesh/Poly)
-        # to preserve vertex/edge/face IDs for synchronization.
-        pass
+         # We intentionally skip destructive cleanup (convertToMesh/Poly)
+         # to preserve vertex/edge/face IDs for synchronization.
+         pass
 
     @staticmethod
     def transfer_uvs_from_imported(imported_objects):

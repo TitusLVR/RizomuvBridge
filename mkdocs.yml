@@ -1,0 +1,47 @@
+site_name: RizomUV Bridge
+site_description: Documentation for RizomUV Bridge for 3ds Max
+site_author: TitusLVR
+repo_url: https://github.com/TitusLVR/RizomuvBridge
+repo_name: TitusLVR/RizomuvBridge
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+  features:
+    - search.suggest
+    - search.highlight
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - attr_list
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - "User Guide": usage.md
+  - "Developer Guide": developer.md
