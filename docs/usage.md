@@ -39,6 +39,14 @@ The bridge exposes direct buttons for common RizomUV commands so you don't alway
 *   **Optimize**: Optimizes the UV distortion.
 *   **Pack**: Packs the UV islands into the UV tile.
 
+## Running Scripts
+
+You can execute custom Lua scripts on your mesh within RizomUV:
+
+1.  **Select Script**: Choose a script from the dropdown menu.
+2.  **Folder**: Click `...` to change the folder where your scripts are stored.
+3.  **Run Script**: Executes the selected script immediately in RizomUV.
+
 ---
 
 ## Preferences
@@ -64,17 +72,10 @@ Configure how meshes are processed before sending to RizomUV:
 
 ---
 
-## Running Scripts
-
-You can execute custom Lua scripts on your mesh within RizomUV:
-
-1.  **Select Script**: Choose a script from the dropdown menu.
-2.  **Folder**: Click `...` to change the folder where your scripts are stored.
-3.  **Run Script**: Executes the selected script immediately in RizomUV.
-
 ## Troubleshooting
 
 ### Connection Issues
 If the bridge cannot find `rizomuv.exe`:
+
 1.  Ensure RizomUV is installed.
 2.  The bridge will prompt you to locate the `.exe` file manually if auto-detection fails.

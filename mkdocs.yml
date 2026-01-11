@@ -7,20 +7,20 @@ repo_name: TitusLVR/RizomuvBridge
 theme:
   name: material
   palette:
-    # Light mode
-    - scheme: default
-      primary: indigo
-      accent: indigo
-      toggle:
-        icon: material/weather-sunny
-        name: Switch to dark mode
-    # Dark mode
+    # Dark mode (Default)
     - scheme: slate
-      primary: indigo
-      accent: indigo
+      primary: teal
+      accent: cyan
       toggle:
         icon: material/weather-night
         name: Switch to light mode
+    # Light mode
+    - scheme: default
+      primary: teal
+      accent: cyan
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
   features:
     - search.suggest
     - search.highlight
@@ -42,4 +42,4 @@ nav:
   - Home: index.md
   - Installation: installation.md
   - "User Guide": usage.md
-  - "Developer Guide": developer.md
+
