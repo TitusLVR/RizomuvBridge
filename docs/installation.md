@@ -3,8 +3,8 @@
 ## System Requirements
 
 *   **Autodesk 3ds Max**: Versions 2025/26/xx.
-*   **RizomUV**: Version 2025.
-*   **OS**: Windows 11.
+*   **RizomUV**: Version 2025.xx
+*   **OS**: Windows 11
 
 ## Installation Steps
 
@@ -21,7 +21,7 @@ There are two primary ways to install the RizomUV Bridge:
 
 1.  Open 3ds Max.
 2.  Go to **Scripting** > **Run Script...** in the main menu.
-3.  Navigate to the RizomUV Bridge `.mzp` file (or `install.ms`) and select it.
+3.  Navigate to the RizomUV Bridge `.mzp` file and select it.
 
 ## Post-Installation
 
@@ -29,7 +29,7 @@ Once installed:
 
 1.  Navigate to **Customize** > **Customize User Interface**.
 2.  Go to the **Toolbars** tab.
-3.  Find the category **"RizomUV Bridge"** (or similar, depending on how the macro is named, usually under `TitusLVR`).
+3.  Find the category **"Titus_Scripts"**.
 4.  Drag the **RizomUV** command to a toolbar of your choice.
 5.  You should see the RizomUV icon ready to use.
 
