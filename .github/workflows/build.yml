@@ -2,9 +2,9 @@ name: Build MZP
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "RizomUVLink" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "RizomUVLink" ]
 
 jobs:
   build:
