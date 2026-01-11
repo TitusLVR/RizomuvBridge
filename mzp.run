@@ -1,8 +1,8 @@
 name "RizomuvBridge"
-version 1.5
+version 2.0
 
 treeMove "RizomuvBridge" to "$userscripts"
-move "Icons\*.*" to "$usericons"
+
 move "Macro\*.*" to "$usermacros"
 
 drop "install.ms"

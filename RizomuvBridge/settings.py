@@ -3,8 +3,7 @@ from pymxs import runtime as rt
 
 class RizomUVBridgeSettings:
     def __init__(self):
-        self.user_scripts_dir = rt.getDir(rt.Name("userscripts"))
-        self.base_dir = os.path.join(self.user_scripts_dir, "RizomuvBridge")
+        self.base_dir = os.path.dirname(os.path.abspath(__file__))
         self.ini_file = os.path.join(self.base_dir, "RizomuvBridge_settings.ini")
         
         if not os.path.exists(self.base_dir):

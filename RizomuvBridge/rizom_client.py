@@ -44,7 +44,19 @@ class RizomClient:
         self.port = None
 
     def is_running(self):
+        # 1. Reliable: Check active connection if port is known
+        if self.link and self.port:
+            try:
+                if self.link.TCPPortIsOpen(self.port):
+                    return True
+            except:
+                pass
+                
+        
         exe_name = self.settings.get_ini_setting("ProccessName", "exeName", "rizomuv.exe")
+        if not exe_name:
+            exe_name = "rizomuv.exe"
+            
         proc_name = exe_name.lower().replace(".exe", "")
         
         if PSUTIL_AVAILABLE:
@@ -81,13 +93,13 @@ class RizomClient:
                  # Link dead or port closed
                  self.port = None
                  
-        # 2. Check if Rizom process is running
-        running = self.is_running()
+        # 2. Check if we can connect to saved port (regardless of process check)
         saved_port = self.settings.get_port()
         
-        if running and saved_port:
+        # If we have a saved port, check if it is open (this is the ultimate "is running" check)
+        if saved_port and self.link.TCPPortIsOpen(saved_port):
              try:
-                 print(f"RizomUV running. Attempting to connect to port {saved_port}...")
+                 print(f"RizomUV port {saved_port} is open. Connecting...")
                  self.link.Connect(saved_port)
                  # Verify connection
                  ver = self.link.RizomUVVersion()
@@ -96,7 +108,7 @@ class RizomClient:
                      self.port = saved_port
                      return True
              except Exception as e:
-                 print(f"Failed to connect to existing instance: {e}")
+                 print(f"Failed to connect to existing instance on port {saved_port}: {e}")
                  # Fall through to launch new
         
         # 3. Launch new instance
@@ -127,27 +139,54 @@ class RizomClient:
             return False
 
     def close(self, force=False):
-        # Always force kill as per latest requirement (Link doesn't support clean exit well yet)
+        print("Closing RizomUV...")
+        
+        # clean exit via Link if possible
+        if not force and self.link and self.port:
+            try:
+                # Try calling Quit() directly on the link wrapper if it exposes it,
+                # or Execute "Quit" command if that is the mechanism.
+                # User specifically requested link.Quit() style.
+                # Checking if method exists or just calling it.
+                if hasattr(self.link, "Quit"):
+                    self.link.Quit()
+                else:
+                     # Fallback to Execute("Quit")
+                     try:
+                        self.link.Execute("Quit", {})
+                     except:
+                        pass
+                
+                # Wait briefly for it to close
+                import time
+                time.sleep(0.5)
+            except Exception as e:
+                print(f"Clean exit failed: {e}")
+        
+        # Always force kill as per latest requirement if it's still running
+        # (Or if user asks for force kill, but even consistently to ensure cleanup)
         self._force_kill()
         self.link = None
         self.port = None
 
     def _force_kill(self):
         exe_name = self.settings.get_ini_setting("ProccessName", "exeName", "rizomuv.exe")
-        proc_name = exe_name.lower().replace(".exe", "")
+        if not exe_name:
+            exe_name = "rizomuv.exe"
         
-        if PSUTIL_AVAILABLE:
-            for proc in psutil.process_iter(['name']):
-                try:
-                    if proc.info['name'].lower().startswith(proc_name):
-                        proc.kill()
-                except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                    pass
-        else:
-             try:
-                subprocess.call(['taskkill', '/F', '/IM', exe_name], shell=True)
-             except:
-                pass
+        # Method 1: Max DOS Command (Most reliable in this context)
+        try:
+            # Check if running first to avoid error spam? taskkill handles "not found" gracefully usually (or prints error)
+            cmd = f'taskkill /F /IM "{exe_name}"'
+            rt.dosCommand(cmd)
+        except:
+            pass
+            
+        # Method 2: Subprocess (Fallback)
+        try:
+            subprocess.call(['taskkill', '/F', '/IM', exe_name], shell=True)
+        except:
+            pass
 
     def load_mesh(self, filepath, file_format=None):
         if not self.connect():

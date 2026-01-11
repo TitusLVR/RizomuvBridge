@@ -84,8 +84,8 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         
     def set_icon(self, button, icon_name):
         try:
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            icon_path = os.path.join(base_dir, "Icons", icon_name)
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            icon_path = os.path.join(base_dir, "IMG", icon_name)
             if os.path.exists(icon_path):
                 button.setIcon(QtGui.QIcon(icon_path))
                 button.setIconSize(QtCore.QSize(16, 16))
