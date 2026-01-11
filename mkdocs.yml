@@ -9,14 +9,14 @@ theme:
   palette:
     # Dark mode (Default)
     - scheme: slate
-      primary: teal
+      primary: blue-grey
       accent: cyan
       toggle:
         icon: material/weather-night
         name: Switch to light mode
     # Light mode
     - scheme: default
-      primary: teal
+      primary: blue-grey
       accent: cyan
       toggle:
         icon: material/weather-sunny

@@ -2,9 +2,9 @@
 
 ## System Requirements
 
-*   **Autodesk 3ds Max**: Versions 2020, 2021, 2022 (Newer versions like 2024/2025 likely supported but verify first).
-*   **RizomUV**: Version 2021, 2022 or newer (VS or MK versions).
-*   **OS**: Windows 10/11.
+*   **Autodesk 3ds Max**: Versions 2025/26/xx.
+*   **RizomUV**: Version 2025.
+*   **OS**: Windows 11.
 
 ## Installation Steps
 
@@ -26,6 +26,7 @@ There are two primary ways to install the RizomUV Bridge:
 ## Post-Installation
 
 Once installed:
+
 1.  Navigate to **Customize** > **Customize User Interface**.
 2.  Go to the **Toolbars** tab.
 3.  Find the category **"RizomUV Bridge"** (or similar, depending on how the macro is named, usually under `TitusLVR`).
