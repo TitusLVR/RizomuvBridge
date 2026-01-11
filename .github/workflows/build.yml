@@ -3,6 +3,8 @@ name: Build MZP
 on:
   push:
     branches: [ "RizomUVLink" ]
+    tags:
+      - 'v*'
   pull_request:
     branches: [ "RizomUVLink" ]
 
@@ -20,8 +22,10 @@ jobs:
           # We need to maintain the structure relative to root.
           zip -r RizomUV_Bridge.mzp mzp.run install.ms RizomuvBridge Macro
 
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
         with:
-          name: RizomUV_Bridge_MZP
-          path: RizomUV_Bridge.mzp
+          files: RizomUV_Bridge.mzp
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
