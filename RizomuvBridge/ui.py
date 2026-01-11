@@ -19,11 +19,49 @@ importlib.reload(core)
 
 from .core import RizomUVBridgeCore
 
+class CollapsibleBox(QtWidgets.QWidget):
+    def __init__(self, title="", parent=None):
+        super(CollapsibleBox, self).__init__(parent)
+        self.toggle_button = QtWidgets.QToolButton(text=title, checkable=True, checked=False)
+        self.toggle_button.setStyleSheet("QToolButton { border: none; font-weight: bold; }")
+        self.toggle_button.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        self.toggle_button.setArrowType(QtCore.Qt.RightArrow)
+        self.toggle_button.toggled.connect(self.on_toggled)
+
+        self.content_area = QtWidgets.QFrame()
+        self.content_area.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.content_area.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.content_area.setVisible(False)
+
+        
+        lay = QtWidgets.QVBoxLayout(self)
+        lay.setSpacing(0)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.addWidget(self.toggle_button)
+        lay.addWidget(self.content_area)
+        
+        # Animations
+        self.anim = QtCore.QParallelAnimationGroup()
+        self.anim.finished.connect(self.on_anim_finished)
+        
+    def on_toggled(self, checked):
+        self.toggle_button.setArrowType(QtCore.Qt.DownArrow if checked else QtCore.Qt.RightArrow)
+        self.content_area.setVisible(checked)
+        
+    def on_anim_finished(self):
+        pass
+
+    def setContentLayout(self, layout):
+        self.content_area.setLayout(layout)
+
+
+
 class RizomUVBridgeDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super(RizomUVBridgeDialog, self).__init__(parent)
         self.setWindowTitle("RizomUV Bridge")
-        self.resize(250, 300)
+        # self.resize(250, 300) # Removed for dynamic resizing
+
         
         # Ensure window is always on top
         # Ensure window is always on top (PySide2/6 compat)
@@ -46,6 +84,12 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         
     def setup_ui(self):
         main_layout = QtWidgets.QVBoxLayout(self)
+        try:
+             main_layout.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
+        except AttributeError:
+             # PySide6 might use SizeConstraint enum
+             main_layout.setSizeConstraint(QtWidgets.QLayout.SizeConstraint.SetFixedSize)
+
         
 
         
@@ -79,7 +123,9 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         
         # --- RizomUV Tools Group ---
         self.group_tools = QtWidgets.QGroupBox("RizomUV Tools")
+        self.group_tools.setMinimumWidth(220) # Ensure window width is constant
         tools_layout = QtWidgets.QGridLayout()
+
         
         self.btn_cut = QtWidgets.QPushButton("Cut")
         self.btn_cut.clicked.connect(self.on_cut_clicked)
@@ -99,6 +145,8 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         self.btn_optimize = QtWidgets.QPushButton("Optimize")
         self.btn_optimize.clicked.connect(self.on_optimize_clicked)
 
+
+
         # Order Requested:
         # Row 0: Weld All | Weld Selected
         # Row 1: Cut (ColSpan 2)
@@ -110,7 +158,10 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         tools_layout.addWidget(self.btn_cut, 1, 0, 1, 2)
         tools_layout.addWidget(self.btn_unfold, 2, 0)
         tools_layout.addWidget(self.btn_optimize, 2, 1)
+
         tools_layout.addWidget(self.btn_pack, 3, 0, 1, 2)
+
+
         
         self.group_tools.setLayout(tools_layout)
         main_layout.addWidget(self.group_tools)
@@ -145,36 +196,25 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         self.script_group.setLayout(script_layout)
         main_layout.addWidget(self.script_group)
         
-        # --- File Format Group ---
-        # --- File Format Group ---
-        self.group_format = QtWidgets.QGroupBox("File Format")
-        format_layout = QtWidgets.QHBoxLayout()
-        
-        format_layout.addWidget(QtWidgets.QLabel("Type:"))
-        self.combo_file_type = QtWidgets.QComboBox()
-        self.combo_file_type.addItems(["USD", "FBX"])
-        # FBX Default (User Request)
-        self.combo_file_type.setCurrentIndex(1) 
-        self.combo_file_type.currentIndexChanged.connect(self.on_file_type_changed)
-        format_layout.addWidget(self.combo_file_type)
-        
-        self.lbl_fbx_ver = QtWidgets.QLabel("FBX Ver:")
-        format_layout.addWidget(self.lbl_fbx_ver)
-        self.combo_fbx = QtWidgets.QComboBox()
-        self.combo_fbx.addItems(["FBX201200", "FBX202000"]) 
-        format_layout.addWidget(self.combo_fbx)
-        
-        format_layout.addStretch()
-        self.group_format.setLayout(format_layout)
-        
-        main_layout.addWidget(self.group_format)
+
 
         # --- RizomUV Link Group ---
         self.group_link = QtWidgets.QGroupBox("RizomUVLink")
         link_layout = QtWidgets.QHBoxLayout()
         
         self.btn_start = QtWidgets.QPushButton("Start RizomUV")
+        # Try to load icon from ../Icons/rizomuv_24i.bmp
+        try:
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            icon_path = os.path.join(base_dir, "Icons", "rizomuv_24i.bmp")
+            if os.path.exists(icon_path):
+                self.btn_start.setIcon(QtGui.QIcon(icon_path))
+                self.btn_start.setIconSize(QtCore.QSize(24, 24))
+        except Exception as e:
+            print(f"Icon load error: {e}")
+            
         self.btn_start.clicked.connect(self.on_start_clicked)
+
         
         self.btn_close = QtWidgets.QPushButton("Close RizomUV")
         self.btn_close.clicked.connect(self.on_close_clicked)
@@ -184,6 +224,57 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         self.group_link.setLayout(link_layout)
         
         main_layout.addWidget(self.group_link)
+
+        # --- Preferences (Collapsible) ---
+        self.group_pref = CollapsibleBox("Preferences")
+        pref_layout = QtWidgets.QVBoxLayout()
+        
+        # File Format
+        format_layout = QtWidgets.QHBoxLayout()
+        format_layout.addWidget(QtWidgets.QLabel("Type:"))
+        self.combo_file_type = QtWidgets.QComboBox()
+        self.combo_file_type.addItems(["USD", "FBX"])
+        self.combo_file_type.setCurrentIndex(1) 
+        self.combo_file_type.currentIndexChanged.connect(self.on_file_type_changed)
+        format_layout.addWidget(self.combo_file_type)
+        
+        self.lbl_fbx_ver = QtWidgets.QLabel("FBX Ver:")
+        format_layout.addWidget(self.lbl_fbx_ver)
+        self.combo_fbx = QtWidgets.QComboBox()
+        self.combo_fbx.addItems(["FBX201200", "FBX202000"]) 
+        format_layout.addWidget(self.combo_fbx)
+        format_layout.addStretch()
+        pref_layout.addLayout(format_layout)
+        
+        # Mesh Inspector Button (Moved here)
+        self.btn_inspector = QtWidgets.QPushButton("Mesh Inspector")
+        self.btn_inspector.clicked.connect(self.on_inspector_clicked)
+        pref_layout.addWidget(self.btn_inspector)
+        
+        # Cleanup Options
+        clean_lab = QtWidgets.QLabel("Cleanup Options:")
+        pref_layout.addWidget(clean_lab)
+        
+        self.chk_collapse_dead = QtWidgets.QCheckBox("Collapse Dead Structs")
+        self.chk_collapse_dead.setChecked(True) # Default on?
+        pref_layout.addWidget(self.chk_collapse_dead)
+        
+        self.chk_del_iso_verts = QtWidgets.QCheckBox("Delete Iso Verts")
+        self.chk_del_iso_verts.setChecked(True)
+        pref_layout.addWidget(self.chk_del_iso_verts)
+        
+        self.chk_del_iso_map = QtWidgets.QCheckBox("Delete Iso Map Verts")
+        self.chk_del_iso_map.setChecked(True)
+        pref_layout.addWidget(self.chk_del_iso_map)
+        
+        self.chk_rebuild_poly = QtWidgets.QCheckBox("Rebuild Poly (Mesh->Poly)")
+        self.chk_rebuild_poly.setChecked(True)
+        pref_layout.addWidget(self.chk_rebuild_poly)
+
+        self.group_pref.setContentLayout(pref_layout)
+        main_layout.addWidget(self.group_pref)
+
+
         
         main_layout.addStretch()
         
@@ -209,7 +300,10 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         self.btn_sync.setVisible(is_running)
         self.group_tools.setVisible(is_running)
         self.script_group.setVisible(is_running)
-        self.group_format.setVisible(is_running)
+        self.group_tools.setVisible(is_running)
+        self.script_group.setVisible(is_running)
+        self.group_pref.setVisible(is_running)
+
         
         if is_running:
             self.on_file_type_changed()
@@ -272,23 +366,29 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
             QtWidgets.QMessageBox.warning(self, "Selection", "Please select objects.")
             return
 
-        valid_objs = [o for o in selection if rt.isKindOf(o, rt.Editable_Poly)]
-        if len(valid_objs) != len(selection):
-             # Compatibility for PySide6 Enums
-             try:
-                 Yes = QtWidgets.QMessageBox.StandardButton.Yes
-                 No = QtWidgets.QMessageBox.StandardButton.No
-             except AttributeError:
-                 Yes = QtWidgets.QMessageBox.Yes
-                 No = QtWidgets.QMessageBox.No
-                 
-             res = QtWidgets.QMessageBox.question(self, "Convert?", "Some objects are not Editable Poly. Convert them?", Yes | No)
-             if res == Yes:
-                 for o in selection:
-                     rt.convertToPoly(o)
-                 valid_objs = selection
+        rebuild_poly = self.chk_rebuild_poly.isChecked()
+        valid_objs = []
+        
+        if rebuild_poly:
+             # Accept all Geometry if conversion is enabled
+             valid_objs = [o for o in selection if rt.superClassOf(o) == rt.GeometryClass]
+        else:
+             # Strict check: Base Object must be Editable Poly or Editable Mesh
+             valid_objs = []
+             for o in selection:
+                 if rt.isKindOf(o.baseObject, rt.Editable_Poly) or rt.isKindOf(o.baseObject, rt.Editable_Mesh):
+                     valid_objs.append(o)
+                     
+        if not valid_objs:
+             # Nothing to export, silent return or warning? User said "skip".
+             # If selection was not empty but valid is empty, we just do nothing.
+             if selection:
+                 pass # Silent skip as requested ("If not -> skip")
              else:
-                 return
+                 # If selection was empty initially (handled above), but double check
+                 pass
+             return
+
 
         # Prepare Logic
         # Prepare Logic
@@ -319,7 +419,16 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         else: # USD
             fix_missing_channels = False
             
-        temp_objs = self.core.prepare_temp_objects(valid_objs, fix_missing_channels=fix_missing_channels)
+        # Gather Cleanup Opts
+        cleanup_opts = {
+            "collapse_dead_structs": self.chk_collapse_dead.isChecked(),
+            "delete_iso_verts": self.chk_del_iso_verts.isChecked(),
+            "delete_iso_map_verts": self.chk_del_iso_map.isChecked(),
+            "rebuild_poly": self.chk_rebuild_poly.isChecked()
+        }
+            
+        temp_objs = self.core.prepare_temp_objects(valid_objs, fix_missing_channels=fix_missing_channels, cleanup_opts=cleanup_opts)
+
         
         # Cleanup geometry
         for o in temp_objs:
@@ -342,7 +451,11 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
             QtWidgets.QMessageBox.critical(self, "Error", "Failed to communicate with RizomUV.")
             return
 
+        # Redraw Viewports as requested
+        rt.redrawViews()
+
         # Auto-Run Logic (Implicit)
+
         try:
              self.core.link.Set({'Path': "Prefs.RemoteControlFileMonitoringOn", 'Value': True})
         except:
@@ -407,6 +520,12 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
     def on_pack_clicked(self):
         self.core.pack()
 
+    def on_inspector_clicked(self):
+        self.core.open_inspector()
+        QtWidgets.QMessageBox.information(self, "Mesh Inspector", "Mesh Inspector triggered.\n\nNote: The dialog only appears if errors are found.")
+
+
+
     def on_weld_clicked(self):
         self.core.weld_all() 
 
@@ -428,6 +547,17 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         new_objs = [o for o in curr_objs if o not in old_objs]
         
         self.core.transfer_uvs_from_imported(new_objs)
+        # Focus Viewport (Zoom Extents Selected)
+        try:
+            # actionMan.executeAction 0 "310"  -- Tools: Zoom Extents Selected
+            rt.actionMan.executeAction(0, "310")
+        except:
+            pass
+            
+        rt.redrawViews()
+
+
+
 
 def show():
     # Helper to show dialog

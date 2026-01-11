@@ -101,8 +101,9 @@ class RizomUVBridgeCore:
         # Select command with empty IDs and ResetBefore=True will clear.
         return self.client.select(mode, ids)
 
-    def prepare_temp_objects(self, objects, fix_missing_channels=False):
-        return self.max_ops.prepare_temp_objects(objects, fix_missing_channels)
+    def prepare_temp_objects(self, objects, fix_missing_channels=False, cleanup_opts=None):
+        return self.max_ops.prepare_temp_objects(objects, fix_missing_channels, cleanup_opts)
+
         
     def cleanup_object(self, obj):
         self.max_ops.cleanup_object(obj)
@@ -122,4 +123,9 @@ class RizomUVBridgeCore:
         
     def transfer_uvs_from_imported(self, objects):
         self.max_ops.transfer_uvs_from_imported(objects)
+
+    def open_inspector(self):
+        self.max_ops.open_inspector()
+
+
 

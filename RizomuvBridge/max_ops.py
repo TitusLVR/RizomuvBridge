@@ -20,6 +20,8 @@ class RizomUVBridgeMaxOps:
         rt.FBXExporterSetParam("ShowWarnings", False)
         rt.FBXExporterSetParam("SmoothingGroups", True)
         rt.FBXExporterSetParam("SmoothMeshExport", True)
+
+
         rt.FBXExporterSetParam("TangentSpaceExport", False)
         rt.FBXExporterSetParam("Triangulate", False)
         rt.FBXExporterSetParam("UpAxis", "Y")
@@ -105,26 +107,58 @@ class RizomUVBridgeMaxOps:
         rt.importFile(filepath, rt.Name("noprompt"), using=rt.USDImporter)
 
     @staticmethod
-    def prepare_temp_objects(objects, fix_missing_channels=False):
+    def prepare_temp_objects(objects, fix_missing_channels=False, cleanup_opts=None):
+        if cleanup_opts is None:
+            cleanup_opts = {}
+            
         temp_objs = []
         timestamp = str(int(time.time()))
         for obj in objects:
             snap = rt.copy(obj)
-            if RizomUVBridgeMaxOps.is_editable_poly(snap) or RizomUVBridgeMaxOps.is_editable_mesh(snap):
-                RizomUVBridgeMaxOps.cleanup_object(snap)
+            # Check if we should process this object
+            should_process = False
+            
+            # If Rebuild Poly is enabled, we assume we can convert any geometry
+            if cleanup_opts.get("rebuild_poly", False):
+                 if rt.superClassOf(snap) == rt.GeometryClass:
+                     should_process = True
+            else:
+                 # Standard check
+                 if RizomUVBridgeMaxOps.is_editable_poly(snap) or RizomUVBridgeMaxOps.is_editable_mesh(snap):
+                     should_process = True
+            
+            if should_process:
+                RizomUVBridgeMaxOps.cleanup_object(snap, cleanup_opts)
             else:
                 rt.delete(snap)
                 continue
+
             
             if fix_missing_channels:
+                # Explicitly disable Vertex Color (Channel 0)
+                try:
+                    if rt.polyop.getMapSupport(snap, 0):
+                        rt.polyop.setMapSupport(snap, 0, False)
+                except:
+                    pass
+
                 # Force map support for all available channels to ensure 
                 # FBX export preserves indices (preventing 5 becoming 2 if 2-4 are empty).
                 # Start at 1 to SKIP Channel 0 (Vertex Color).
                 num_maps = rt.polyop.getNumMaps(snap)
-                for i in range(1, num_maps + 1):
-                     if not rt.polyop.getMapSupport(snap, i):
-                         rt.polyop.setMapSupport(snap, i, True)
-
+                for i in range(1, num_maps):
+                    if not rt.polyop.getMapSupport(snap, i):
+                        rt.polyop.setMapSupport(snap, i, True)
+                    
+                    # Sync Channel Name
+                    try:
+                        # 3 = "Map Channel" in ChannelInfo enum/ID
+                        name = rt.ChannelInfo.GetChannelName(obj, 3, i)
+                        if name:
+                            rt.ChannelInfo.NameChannel(snap, 3, i, name)
+                    except:
+                        pass
+            
             handle = rt.GetHandleByAnim(obj)
             snap.name = f"{timestamp}__{handle}"
             temp_objs.append(snap)
@@ -139,13 +173,41 @@ class RizomUVBridgeMaxOps:
         return rt.isKindOf(obj.baseObject, rt.Editable_Mesh)
 
     @staticmethod
-    def cleanup_object(obj):
-         # We intentionally skip destructive cleanup (convertToMesh/Poly)
-         # to preserve vertex/edge/face IDs for synchronization.
-         pass
+    def cleanup_object(obj, opts={}):
+         # User provided cleanup:
+         # polyop.CollapseDeadStructs o
+         # o.deleteIsoVerts()
+         # o.DeleteIsoMapVerts()
+         # convertToMesh o
+         # convertToPoly o
+
+         # Apply selected options (default to False if not passed, or True if we want defaults?)
+         # Assuming UI passed values.
+         
+         if opts.get("collapse_dead_structs", False):
+             try:
+                 rt.polyop.CollapseDeadStructs(obj)
+             except: pass
+             
+         if opts.get("delete_iso_verts", False):
+             try:
+                 obj.deleteIsoVerts() # or rt.polyop.deleteIsoVerts(obj)
+             except: pass
+             
+         if opts.get("delete_iso_map_verts", False):
+             try:
+                 obj.DeleteIsoMapVerts() # or rt.polyop.deleteIsoMapVerts(obj)
+             except: pass
+         
+         if opts.get("rebuild_poly", False):
+             try:
+                 rt.convertToMesh(obj)
+                 rt.convertToPoly(obj)
+             except: pass
 
     @staticmethod
     def transfer_uvs_from_imported(imported_objects):
+        modified_nodes = []
         for obj in imported_objects:
             if rt.classOf(obj) == rt.Dummy:
                 rt.delete(obj)
@@ -183,10 +245,6 @@ class RizomUVBridgeMaxOps:
                             count = rt.polyop.getNumMaps(obj) - 1
                             
                             for i in range(1, count + 1):
-                                 # rt.ChannelInfo.GetChannelName does not exist in pymxs. 
-                                 # We cannot easily retrieve map channel names via this interface.
-                                 # Proceeding with generic copy/paste.
-                                 
                                  rt.ChannelInfo.CopyChannel(obj, 3, i)
                                  rt.ChannelInfo.PasteChannel(original_node, 3, i)
                                  
@@ -195,10 +253,17 @@ class RizomUVBridgeMaxOps:
                                          original_node.modifiers[0].name = f"RizomUV's ch{i}"
                                      except:
                                          pass
+                            
+                            if original_node not in modified_nodes:
+                                modified_nodes.append(original_node)
             except Exception as e:
                 print(f"Error transferring UVs for {obj.name}: {e}")
             
             rt.delete(obj)
+            
+        if modified_nodes:
+            rt.select(modified_nodes)
+
 
     @staticmethod
     def get_selection():
@@ -274,5 +339,17 @@ class RizomUVBridgeMaxOps:
             ids = [int(x)-1 for x in list(max_ids)]
             
         return mode, ids
+
+    @staticmethod
+    def open_inspector():
+        try:
+             # Enable, Disable Auto-Repair (to force dialog?), Show Dialog
+             rt.execute("MeshInspector.Enable = true")
+             # Try disabling auto-repair to ensure dialog appears
+             rt.execute("MeshInspector.RepairMesh = false") 
+             rt.execute("MeshInspector.ShowDialog = true")
+        except Exception as e:
+             print(f"Failed to open Mesh Inspector: {e}")
+
             
 

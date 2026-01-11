@@ -167,6 +167,8 @@ class RizomClient:
             "File.Normals": not is_usd, # User requested normals off for USD import in Rizom
             "File.ImportGroups": True,
         }
+
+
         
         # Add FBX specific params only if FBX
         if filepath.lower().endswith(".fbx") or (file_format and file_format.upper() == "FBX"):
