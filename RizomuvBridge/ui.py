@@ -82,6 +82,16 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         
         self.setup_ui()
         
+    def set_icon(self, button, icon_name):
+        try:
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            icon_path = os.path.join(base_dir, "Icons", icon_name)
+            if os.path.exists(icon_path):
+                button.setIcon(QtGui.QIcon(icon_path))
+                button.setIconSize(QtCore.QSize(16, 16))
+        except Exception as e:
+            print(f"Icon load error for {icon_name}: {e}")
+
     def setup_ui(self):
         main_layout = QtWidgets.QVBoxLayout(self)
         try:
@@ -99,11 +109,13 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         action_layout = QtWidgets.QGridLayout()
         
         self.btn_send = QtWidgets.QPushButton("Send")
-        self.btn_send.setMinimumHeight(40)
+        self.btn_send.setMinimumHeight(24)
+        self.set_icon(self.btn_send, "rizomuv.png")
         self.btn_send.clicked.connect(self.on_send_clicked)
         
         self.btn_get = QtWidgets.QPushButton("Get")
-        self.btn_get.setMinimumHeight(40)
+        self.btn_get.setMinimumHeight(24)
+        self.set_icon(self.btn_get, "rizomuv_get.png")
         self.btn_get.clicked.connect(self.on_get_clicked)
         
         # Grid: Send|Get  Sync(Full)
@@ -111,7 +123,8 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         action_layout.addWidget(self.btn_get, 0, 1)
         
         self.btn_sync = QtWidgets.QPushButton("Sync Sel")
-        self.btn_sync.setMinimumHeight(40)
+        self.btn_sync.setMinimumHeight(24)
+        self.set_icon(self.btn_sync, "rizomuv_refresh.png")
         self.btn_sync.setToolTip("Sync Selection Mode from Max")
         self.btn_sync.clicked.connect(self.on_sync_selection_clicked)
         action_layout.addWidget(self.btn_sync, 1, 0, 1, 2)
@@ -123,26 +136,32 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         
         # --- RizomUV Tools Group ---
         self.group_tools = QtWidgets.QGroupBox("RizomUV Tools")
-        self.group_tools.setMinimumWidth(220) # Ensure window width is constant
+        self.group_tools.setMinimumWidth(230) # Ensure window width is constant
         tools_layout = QtWidgets.QGridLayout()
 
         
         self.btn_cut = QtWidgets.QPushButton("Cut")
+        self.set_icon(self.btn_cut, "rizomuv_cut.png")
         self.btn_cut.clicked.connect(self.on_cut_clicked)
         
         self.btn_unfold = QtWidgets.QPushButton("Unfold")
+        self.set_icon(self.btn_unfold, "rizomuv_unfold.png")
         self.btn_unfold.clicked.connect(self.on_unfold_clicked)
         
         self.btn_pack = QtWidgets.QPushButton("Pack")
+        self.set_icon(self.btn_pack, "rizomuv_pack.png")
         self.btn_pack.clicked.connect(self.on_pack_clicked)
         
         self.btn_weld = QtWidgets.QPushButton("Weld All")
+        self.set_icon(self.btn_weld, "rizomuv_weld.png")
         self.btn_weld.clicked.connect(self.on_weld_clicked)
         
         self.btn_weld_selected = QtWidgets.QPushButton("Weld Selected")
+        self.set_icon(self.btn_weld_selected, "rizomuv_weld.png")
         self.btn_weld_selected.clicked.connect(self.on_weld_selected_clicked)
         
         self.btn_optimize = QtWidgets.QPushButton("Optimize")
+        self.set_icon(self.btn_optimize, "rizomuv_optimize.png")
         self.btn_optimize.clicked.connect(self.on_optimize_clicked)
 
 
@@ -203,20 +222,12 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         link_layout = QtWidgets.QHBoxLayout()
         
         self.btn_start = QtWidgets.QPushButton("Start RizomUV")
-        # Try to load icon from ../Icons/rizomuv_24i.bmp
-        try:
-            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            icon_path = os.path.join(base_dir, "Icons", "rizomuv_24i.bmp")
-            if os.path.exists(icon_path):
-                self.btn_start.setIcon(QtGui.QIcon(icon_path))
-                self.btn_start.setIconSize(QtCore.QSize(24, 24))
-        except Exception as e:
-            print(f"Icon load error: {e}")
-            
+        self.set_icon(self.btn_start, "rizomuv.png")
         self.btn_start.clicked.connect(self.on_start_clicked)
 
         
         self.btn_close = QtWidgets.QPushButton("Close RizomUV")
+        self.set_icon(self.btn_close, "rizomuv_close.png")
         self.btn_close.clicked.connect(self.on_close_clicked)
         
         link_layout.addWidget(self.btn_start)
@@ -229,7 +240,8 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         self.group_pref = CollapsibleBox("Preferences")
         pref_layout = QtWidgets.QVBoxLayout()
         
-        # File Format
+        # --- File Format (Grouped) ---
+        self.group_file_format = QtWidgets.QGroupBox("File Format")
         format_layout = QtWidgets.QHBoxLayout()
         format_layout.addWidget(QtWidgets.QLabel("Type:"))
         self.combo_file_type = QtWidgets.QComboBox()
@@ -244,32 +256,41 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         self.combo_fbx.addItems(["FBX201200", "FBX202000"]) 
         format_layout.addWidget(self.combo_fbx)
         format_layout.addStretch()
-        pref_layout.addLayout(format_layout)
+        self.group_file_format.setLayout(format_layout)
+        pref_layout.addWidget(self.group_file_format)
         
-        # Mesh Inspector Button (Moved here)
-        self.btn_inspector = QtWidgets.QPushButton("Mesh Inspector")
-        self.btn_inspector.clicked.connect(self.on_inspector_clicked)
-        pref_layout.addWidget(self.btn_inspector)
-        
-        # Cleanup Options
-        clean_lab = QtWidgets.QLabel("Cleanup Options:")
-        pref_layout.addWidget(clean_lab)
+        # --- Cleanup Options (Grouped) ---
+        self.group_cleanup = QtWidgets.QGroupBox("Export Cleanup Options")
+        cleanup_layout = QtWidgets.QVBoxLayout()
         
         self.chk_collapse_dead = QtWidgets.QCheckBox("Collapse Dead Structs")
-        self.chk_collapse_dead.setChecked(True) # Default on?
-        pref_layout.addWidget(self.chk_collapse_dead)
+        self.chk_collapse_dead.setChecked(True) 
+        cleanup_layout.addWidget(self.chk_collapse_dead)
         
         self.chk_del_iso_verts = QtWidgets.QCheckBox("Delete Iso Verts")
         self.chk_del_iso_verts.setChecked(True)
-        pref_layout.addWidget(self.chk_del_iso_verts)
+        cleanup_layout.addWidget(self.chk_del_iso_verts)
         
         self.chk_del_iso_map = QtWidgets.QCheckBox("Delete Iso Map Verts")
         self.chk_del_iso_map.setChecked(True)
-        pref_layout.addWidget(self.chk_del_iso_map)
+        cleanup_layout.addWidget(self.chk_del_iso_map)
         
         self.chk_rebuild_poly = QtWidgets.QCheckBox("Rebuild Poly (Mesh->Poly)")
         self.chk_rebuild_poly.setChecked(True)
-        pref_layout.addWidget(self.chk_rebuild_poly)
+        cleanup_layout.addWidget(self.chk_rebuild_poly)
+        
+        self.group_cleanup.setLayout(cleanup_layout)
+        pref_layout.addWidget(self.group_cleanup)
+
+        # Mesh Inspector (Bottom)
+        self.btn_inspector = QtWidgets.QPushButton("Mesh Inspector")
+        self.btn_inspector.clicked.connect(self.on_inspector_clicked)
+        pref_layout.addWidget(self.btn_inspector)
+        # Help Button
+        self.btn_help = QtWidgets.QPushButton("Help")
+        self.btn_help.clicked.connect(self.on_help_clicked)
+        pref_layout.addWidget(self.btn_help)
+
 
         self.group_pref.setContentLayout(pref_layout)
         main_layout.addWidget(self.group_pref)
@@ -525,6 +546,11 @@ class RizomUVBridgeDialog(QtWidgets.QDialog):
         QtWidgets.QMessageBox.information(self, "Mesh Inspector", "Mesh Inspector triggered.\n\nNote: The dialog only appears if errors are found.")
 
 
+
+    def on_help_clicked(self):
+        # Open Help URL
+        url = QtCore.QUrl("https://tituslvr.github.io/RizomuvBridge/")
+        QtGui.QDesktopServices.openUrl(url)
 
     def on_weld_clicked(self):
         self.core.weld_all() 

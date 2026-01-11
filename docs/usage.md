@@ -6,11 +6,11 @@ This guide explains the interface and workflows of the RizomUV Bridge.
 
 The RizomUV Bridge window is divided into several logical sections:
 
-1.  **Actions**: The main controls for transferring data.
-2.  **RizomUV Tools**: Access to common RizomUV algorithms.
+1.  **Actions**: The main controls for transferring data (Send, Get, Sync).
+2.  **RizomUV Tools**: Access to common RizomUV algorithms (Cut, Pack, etc.).
 3.  **Scripts**: Execute custom Lua scripts.
-4.  **File Format**: Configure data exchange settings.
-5.  **Connection**: Manage the link to RizomUV application.
+4.  **Connection**: Manage the link to RizomUV application (Start/Close).
+5.  **Preferences**: Collapsible section for configuration.
 
 ---
 
@@ -18,13 +18,14 @@ The RizomUV Bridge window is divided into several logical sections:
 
 ### Sending Objects
 1.  **Selection**: Select one or more **Editable Poly** objects in 3ds Max.
-    *   *Tip: If your object is not an Editable Poly, the bridge will ask to convert it.*
+    *   *Tip: The bridge works best with Editable Poly objects.*
 2.  **Click "Send"**: This exports the geometry to a temporary file and commands RizomUV to load it.
 3.  **RizomUV Opens**: The application will launch (if not running) and load your mesh.
 
 ### Getting Results
 Usually, the bridge automates the return process. However, you can manually trigger it:
-1.  **Click "Get"**: Checks for the output file from RizomUV and imports the updated UVs onto your original mesh.
+1.  **Save in RizomUV**: Press `Ctrl+S` in RizomUV to save the temp file.
+2.  **Click "Get"**: Checks for the output file from RizomUV and imports the updated UVs onto your original mesh.
 
 ---
 
@@ -32,8 +33,7 @@ Usually, the bridge automates the return process. However, you can manually trig
 
 The bridge exposes direct buttons for common RizomUV commands so you don't always have to switch windows:
 
-*   **Weld All**: Welds all UV vertices.
-*   **Weld Selected**: Welds only currently selected UV components.
+*   **Weld All / Weld Selected**: Welds UV vertices.
 *   **Cut**: Performs a cut operation based on current selection/seams.
 *   **Unfold**: Runs the Unfold algorithm.
 *   **Optimize**: Optimizes the UV distortion.
@@ -41,14 +41,25 @@ The bridge exposes direct buttons for common RizomUV commands so you don't alway
 
 ---
 
-## File Formats
+## Preferences
 
+This section is collapsible to save space. Click "Preferences" to expand.
+
+### File Format
 You can choose the intermediate format used for data exchange:
-
 *   **FBX** (Default): Robust and widely supported.
-    *   *FBX Version*: Choose between 2012 and 2020 versions if needed for compatibility.
 *   **USD**: Uses Universal Scene Description for exchange.
-    *   *Note*: When using USD, certain options like "FBX Version" are hidden.
+
+### Export Cleanup Options
+Configure how meshes are processed before sending to RizomUV:
+*   **Collapse Dead Structs**: Removes unused data structures.
+*   **Delete Iso Verts**: Deletes isolated vertices.
+*   **Delete Iso Map Verts**: Deletes isolated map vertices.
+*   **Rebuild Poly**: Rebuilds the Editable Poly object to ensure data integrity.
+
+### Other
+*   **Mesh Inspector**: Launches the Mesh Inspector tool to verify geometry.
+*   **Help**: Opens the online documentation.
 
 ---
 
@@ -66,7 +77,3 @@ You can execute custom Lua scripts on your mesh within RizomUV:
 If the bridge cannot find `rizomuv.exe`:
 1.  Ensure RizomUV is installed.
 2.  The bridge will prompt you to locate the `.exe` file manually if auto-detection fails.
-
-### Selection Issues
-*   The bridge works best with **Editable Poly** objects.
-*   Ensure your object has valid geometry before sending.

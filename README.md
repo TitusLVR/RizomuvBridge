@@ -1,42 +1,55 @@
-## Connecting 3ds Max and RizomUV for UVW Channel Exchange
+# Connecting 3ds Max and RizomUV for UVW Channel Exchange
 
-This bridge script connects 3ds Max by Autodesk with RizomUV by RizomLabs, enabling efficient UVW channel exchange between the two tools.
+This bridge script connects **3ds Max** (Autodesk) with **RizomUV** (RizomLabs), enabling efficient UVW channel exchange between the two tools.
 
-## Installation Instructions:
- - Drag and Drop: Simply drag and drop the MZP file into the 3ds Max viewport.
- - Run Script: Alternatively, go to 3ds Max > Scripting > Run Script, then select the RizomUV Bridge MZP file.
- - After installation, you will see the RizomUV icon appear on the main toolbar of the 3ds Max application.
-Note: Administrator rights may be required for installation.
+## Installation Instructions
 
-## How It Works:
-In 3ds Max:
- - Select an object or multiple objects.
- - Choose the desired editing mode.
- - Press the RizomUV button on the toolbar to send objects to RizomUV.
+1.  **Drag and Drop**: Simply drag and drop the `install.ms` or MZP file into the 3ds Max viewport.
+2.  **Run Script**: Alternatively, go to **Scripting > Run Script**, then select the RizomUV Bridge installer.
+3.  **Toolbar**: After installation, you will see the RizomUV icon on the main toolbar or find the macro in **Customize User Interface** under the `TitusLVR` category.
 
-In RizomUV:
- - Create or edit UVs as needed.
- - Press the Save button.
-Once you press Save, RizomUV will close, and the 3ds Max window will reappear. The updated UVs will be applied to your objects as modifiers.
+## How It Works
 
+### Sending to RizomUV
+1.  **Select** one or more **Editable Poly** objects in 3ds Max.
+2.  Click **"Send"** (or "Start RizomUV" if not open).
+3.  The objects are exported and loaded into RizomUV automatically.
 
-## 3dsmax INFO:
- - Primary Button: Clicking the large RizomUV logo sends the selected objects to RizomUV
- - Objects must be in an editable poly format.
- - If the object has a modifier stack, the script will automatically collapse it to an editable poly. Please proceed cautiously to avoid unintended changes.
- - Right Mouse Button (RMB) on Mode Options (New, Edit, Preset): Opens the current Lua script in Notepad, allowing you to edit and save it or create a new preset.
- - RMB on Preset Dropdown: Reloads or updates the presets list.
+### Editing in RizomUV
+-   Use RizomUV to Unfold, Pack, and Optimize your UVs.
+-   You can also use the **Bridge Tools** directly from 3ds Max (Cut, Unfold, Pack, Weld) to control RizomUV remotely.
 
-## Editing Preset Files:
-  In RizomUV, open the Script and Command Log window (default shortcut: L).
-  The log will display the commands and parameters for any changes made.
-  Copy the relevant lines and paste them into your preset file. Save the file to complete the update.
+### getting Results
+1.  **Save** your work in RizomUV (standard Save `Ctrl+S`).
+2.  Click **"Get"** in the Bridge UI to import the updated UVs back to 3ds Max.
 
-## Script Requirements:
- - 3ds Max: Compatible with versions 2020, 2021, and 2022.
- - RizomUV: Compatible with versions 2021 and 2022.
- - Note: Older versions of 3ds Max may work but are not officially supported. Use them at your own risk.
+## UI Overview
 
-## Additional Information:
-Current version: 1.5.1
-Thank you for using this script! Happy UV-ing!
+### Actions
+-   **Send**: Exports selected objects to RizomUV.
+-   **Get**: Imports the current mesh from RizomUV back to 3ds Max.
+-   **Sync Sel**: Syncs the selection mode (Edge/Poly/Vertex) from 3ds Max to RizomUV.
+
+### Tools
+-   **Weld / Weld Selected**: Weld vertices.
+-   **Cut / Unfold / Optimize / Pack**: Standard RizomUV operations accessible directly from 3ds Max.
+
+### Scripts
+-   Run custom Lua scripts located in the configured scripts folder.
+
+### Preferences (Collapsible)
+-   **File Format**: Choose between **FBX** (default) and **USD**.
+-   **Export Cleanup Options**:
+    -   *Collapse Dead Structs*: Clean up dead structures.
+    -   *Delete Iso Verts*: Remove isolated vertices.
+    -   *Rebuild Poly*: Convert to Editable Poly on export.
+-   **Mesh Inspector**: Check mesh integrity.
+-   **Help**: Link to documentation.
+
+## Requirements
+-   **3ds Max**: 2020, 2021, 2022+
+-   **RizomUV**: 2022.1+ (VSRS)
+
+## Additional Information
+Current version: 1.5.2
+Happy UV-ing!
