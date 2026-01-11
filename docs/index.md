@@ -2,7 +2,7 @@
 
 **RizomUV Bridge** connects **Autodesk 3ds Max** with **RizomUV** by RizomLabs, enabling a seamless and efficient workflow for UVW channel exchange.
 
-![Bridge Interface](https://via.placeholder.com/800x400?text=RizomUV+Bridge+Interface)
+![Bridge Interface](img/rizom_uv_ui.png)
 
 ## Key Features
 

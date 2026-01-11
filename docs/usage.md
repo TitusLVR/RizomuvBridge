@@ -4,6 +4,9 @@ This guide explains the interface and workflows of the RizomUV Bridge.
 
 ## Interface Overview
 
+
+![Full Interface](img/rizom_uv_ui.png)
+
 The RizomUV Bridge window is divided into several logical sections:
 
 1.  **Actions**: The main controls for transferring data (Send, Get, Sync).
@@ -11,6 +14,11 @@ The RizomUV Bridge window is divided into several logical sections:
 3.  **Scripts**: Execute custom Lua scripts.
 4.  **Connection**: Manage the link to RizomUV application (Start/Close).
 5.  **Preferences**: Collapsible section for configuration.
+
+### Connection State
+When RizomUV is not running, the interface simplifies to show only the Start button:
+
+![Start Interface](img/rizom_uv_start.png)
 
 ---
 

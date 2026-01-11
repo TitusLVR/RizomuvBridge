@@ -1,0 +1,27 @@
+name: Build MZP
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Create MZP Archive
+        run: |
+          # Create a zip file named RizomUV_Bridge.mzp including necessary files/folders
+          # -r recursive, -j (junk paths? no we want structure) 
+          # We need to maintain the structure relative to root.
+          zip -r RizomUV_Bridge.mzp mzp.run install.ms RizomuvBridge Macro
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RizomUV_Bridge_MZP
+          path: RizomUV_Bridge.mzp
