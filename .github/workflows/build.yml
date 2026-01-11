@@ -20,7 +20,7 @@ jobs:
           # Create a zip file named RizomUV_Bridge.mzp including necessary files/folders
           # -r recursive, -j (junk paths? no we want structure) 
           # We need to maintain the structure relative to root.
-          zip -r RizomUV_Bridge.mzp mzp.run install.ms RizomuvBridge Macro
+          zip -r RizomUV_Bridge.mzp mzp.run install.ms RizomuvBridge Macro Icons
 
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')

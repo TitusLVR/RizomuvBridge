@@ -2,6 +2,7 @@ name "RizomuvBridge"
 version 2.0
 
 treeMove "RizomuvBridge" to "$userscripts"
+move "Icons\*.bmp" to "$usericons"
 
 move "Macro\*.*" to "$usermacros"
 
