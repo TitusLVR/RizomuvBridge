@@ -52,6 +52,7 @@ You can choose the intermediate format used for data exchange:
 
 ### Export Cleanup Options
 Configure how meshes are processed before sending to RizomUV:
+
 *   **Collapse Dead Structs**: Removes unused data structures.
 *   **Delete Iso Verts**: Deletes isolated vertices.
 *   **Delete Iso Map Verts**: Deletes isolated map vertices.
